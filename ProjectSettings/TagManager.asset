@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags:
+  - PickUpable
+  - InventorySpriteSlot1
+  - InventorySpriteSlot2
+  - InventorySpriteSlot3
+  - InventorySpriteSlot4
+  - InventorySpriteSlot5
+  - Zombie
+  - Experience
+  - PowerUpsMenu
+  - StatsHolder
+  - Bullet
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - 
+  - 
+  - Primary
+  - Secondary
+  - Melee
+  - Utility 1
+  - Utility 2
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  m_RenderingLayers:
+  - Default
