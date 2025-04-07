@@ -1658,7 +1658,7 @@ Transform:
   m_GameObject: {fileID: 496783680}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0.4, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2775,6 +2775,7 @@ MonoBehaviour:
     shootSpread: 15
     bulletSpeed: 3
   shootAction: {fileID: 6276047804198612580, guid: ca482ad207982b343a2e372aa8f443ff, type: 3}
+  reloadAction: {fileID: 5767638156921653113, guid: ca482ad207982b343a2e372aa8f443ff, type: 3}
   bulletPrefab: {fileID: 4205552342762557079, guid: c070481daaa03004fa5f7803d5e04094, type: 3}
   _firePoint: {fileID: 496783681}
 --- !u!58 &952685513
