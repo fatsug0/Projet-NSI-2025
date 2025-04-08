@@ -18,7 +18,8 @@ public class WeaponMachineGunScript : MonoBehaviour
     [SerializeField] private InputActionReference shootAction;
     [SerializeField] private InputActionReference reloadAction;
     [SerializeField] private GameObject bulletPrefab;
-    [SerializeField] private Transform _firePoint;
+    private Transform _firePoint;
+    [SerializeField] private float quaternionCoef;
 
     private void OnEnable()
     {
@@ -35,6 +36,7 @@ public class WeaponMachineGunScript : MonoBehaviour
     private void Start()
     {
         pickableSpriteId = GetComponent<PickableSpriteId>();
+        _firePoint = transform.GetChild(0);
     }
     
     private void Update()
@@ -61,11 +63,11 @@ public class WeaponMachineGunScript : MonoBehaviour
         else
         {
             // Apply shoot spread
-            float spreadAmount = (int)stats.shootSpread * 6.5f; // Tweak this multiplier to adjust spread sharpness
+            float spreadAmount = (int)stats.shootSpread * quaternionCoef; // Tweak this multiplier to adjust spread sharpness
             float spreadAngle = Random.Range(-spreadAmount, spreadAmount);
 
             // Apply spread to the rotation
-            Quaternion spreadRotation = Quaternion.Euler(0, 0, _firePoint.eulerAngles.z + spreadAngle);
+            Quaternion spreadRotation = Quaternion.Euler(0, 0, _firePoint.eulerAngles.z + spreadAngle - quaternionCoef);
 
             // Instantiate bullet with spread applied
             GameObject bullet = Instantiate(bulletPrefab, _firePoint.position, spreadRotation);
@@ -75,11 +77,5 @@ public class WeaponMachineGunScript : MonoBehaviour
             Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
             rb.linearVelocity = bullet.transform.right * (int)stats.bulletSpeed;
         }
-    }
-
-    private void OnDrawGizmosSelected()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.right, transform.right * 5);
     }
 }

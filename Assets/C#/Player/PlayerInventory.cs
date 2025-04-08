@@ -144,24 +144,29 @@ public class PlayerInventory : MonoBehaviour
             _inventorySpriteRenderers[_currentSlot].transform.GetChild(1).transform.localPosition = Vector3.zero;
             _inventorySpriteRenderers[_currentSlot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1, 0);
             _inventory[_currentSlot].gameObject.SetActive(false);
-            _inventory[_currentSlot].transform.GetChild(0).GetComponent<PickableSpriteId>().isEquipped = false;
+
+            if (_inventory[_currentSlot].transform.childCount > 0)
+            {
+                _inventory[_currentSlot].transform.GetChild(0).GetComponent<PickableSpriteId>().isEquipped = false;
+            }
+
             _currentSlot = slot;
+
             _inventorySpriteRenderers[slot].transform.GetChild(1).transform.localPosition = new Vector3(0, 0 - inUseFloatDifference, 0);
             _inventorySpriteRenderers[slot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1 + inUseFloatDifference, 0);
             _inventory[slot].gameObject.SetActive(true);
-            _inventory[slot].transform.GetChild(0).GetComponent<PickableSpriteId>().isEquipped = true;
+
+            if (_inventory[slot].transform.childCount > 0)
+            {
+                _inventory[slot].transform.GetChild(0).GetComponent<PickableSpriteId>().isEquipped = true;
+            }
         }
-        catch (UnityException)
+        catch (UnityException e)
         {
-            _inventorySpriteRenderers[_currentSlot].transform.GetChild(1).transform.localPosition = Vector3.zero;
-            _inventorySpriteRenderers[_currentSlot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1, 0);
-            _inventory[_currentSlot].gameObject.SetActive(false);
-            _currentSlot = slot;
-            _inventorySpriteRenderers[slot].transform.GetChild(1).transform.localPosition = new Vector3(0, 0 - inUseFloatDifference, 0);
-            _inventorySpriteRenderers[slot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1 + inUseFloatDifference, 0);
-            _inventory[slot].gameObject.SetActive(true);
+            Debug.LogWarning($"EquipItem failed: {e.Message}");
         }
     }
+
     
     private void PickUpItem(GameObject item)
     {
@@ -207,15 +212,18 @@ public class PlayerInventory : MonoBehaviour
         // item.SetActive(false);
         item.transform.SetParent(_inventory[targetSlot].transform);
         item.transform.localPosition = Vector3.zero;
+        item.transform.localRotation = Quaternion.Euler(0, 0, item.GetComponent<PickableSpriteId>().rotDiff);
         item.GetComponent<SpriteRenderer>().sortingOrder = 3;
         EquipItem(targetSlot);
     }
 
     private void DropItem(GameObject item)
     {
+        PickableSpriteId pickableSpriteId = item.GetComponent<PickableSpriteId>();
         item.transform.SetParent(null);
+        item.transform.localRotation = Quaternion.Euler(0, 0, pickableSpriteId.rotDiff);
         item.GetComponent<SpriteRenderer>().sortingOrder = 1;
-        item.GetComponent<PickableSpriteId>().isEquipped = false;
+        pickableSpriteId.isEquipped = false;
         Destroy(_inventorySpriteRenderers[_currentSlot].transform.GetChild(0).transform.GetChild(0).gameObject);
     }
 

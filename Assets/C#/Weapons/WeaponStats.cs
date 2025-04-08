@@ -7,7 +7,7 @@ public class WeaponStats
     public enum ReloadSpeed { Slow = 3, Normal = 2, Fast = 1 }
     public enum Range { Short = 5, Medium = 10, Long = 15 }
     public enum ShootSpread { None = 0, Small = 5, Medium = 10, Long = 15 }
-    public enum BulletSpeed { Slow = 1, Normal = 2, Fast = 3 }
+    public enum BulletSpeed { Slow = 20, Normal = 30, Fast = 40 }
 
     public DamageLevel damage;
     public ReloadSpeed reloadSpeed;

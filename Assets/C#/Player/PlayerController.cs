@@ -11,7 +11,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private InputActionReference moveAction;
     [SerializeField] private InputActionReference sprintAction;
     [SerializeField] private InputActionReference shootAction;
-    [SerializeField] private InputActionReference dashAction;
     
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed;
@@ -19,10 +18,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float rotationSpeed;
     [SerializeField] private float speedTransition;
     private float _currentSpeed;
-
-    [Header("Dash Settings")] 
-    [SerializeField] private float dashForce;
-    [SerializeField] private float dashSpeed;
     
     [Header("Health Settings")]
     public float maxHealth = 5;
@@ -44,19 +39,19 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private GameObject powerUpMenu;
     [SerializeField] private HandleGUIStats statsHolder;
     
-    [SerializeField] private int _reloadLevel = 1;
+    private int _reloadLevel = 1;
     private float _baseReloadSpeed;
     [SerializeField] private float reloadLevelCoef;
     
-    [SerializeField] private int _staminaLevel = 1;
+    private int _staminaLevel = 1;
     private float _baseStamina;
     [SerializeField] private float staminaLevelCoef;
     
-    [SerializeField] private int _runSpeedLevel = 1;
+    private int _runSpeedLevel = 1;
     private float _baseRunSpeed;
     [SerializeField] private float runSpeedLevelCoef;
     
-    [SerializeField] private int _healthLevel = 1;
+    private int _healthLevel = 1;
     [SerializeField] private int maxHealthLevel = 5;
 
     private void OnEnable()
@@ -64,7 +59,6 @@ public class PlayerController : MonoBehaviour
         moveAction.action.Enable();
         sprintAction.action.Enable();
         shootAction.action.Enable();
-        dashAction.action.Enable();
     }
 
     private void OnDisable()
@@ -72,7 +66,6 @@ public class PlayerController : MonoBehaviour
         moveAction.action.Disable();
         sprintAction.action.Disable();
         shootAction.action.Disable();
-        dashAction.action.Disable();
     }
 
     private void Start() // Initialize all the used systems (health, stamina, inventory, vision, ...)
@@ -101,12 +94,6 @@ public class PlayerController : MonoBehaviour
     {
         bool isSprinting = sprintAction.action.IsPressed();
         Vector2 rawMoveInput = moveAction.action.ReadValue<Vector2>();
-
-        if (dashAction.action.IsPressed())
-        {
-            Vector2 dashDirection = rawMoveInput * dashForce;
-            transform.position = Vector2.Lerp(transform.position, dashDirection, Time.deltaTime * dashSpeed);
-        }
         
         if (isSprinting && _currentStamina > 0)
         {
