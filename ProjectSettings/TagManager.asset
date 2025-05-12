@@ -15,23 +15,28 @@ TagManager:
   - PowerUpsMenu
   - StatsHolder
   - Bullet
+  - RoundManager
+  - SpawnPoint
+  - Checkpoint
+  - Walls
+  - Sky
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - PostProcessing
   - Water
   - UI
-  - 
-  - 
-  - 
-  - 
+  - LEVEL1
+  - LEVEL2
+  - LEVEL3
+  - Player
   - Primary
   - Secondary
   - Melee
   - Utility 1
   - Utility 2
-  - 
+  - SKY
   - 
   - 
   - 
@@ -51,6 +56,21 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: SKY
+    uniqueID: 96716775
+    locked: 0
+  - name: LEVEL1
+    uniqueID: 255017153
+    locked: 0
+  - name: LEVEL2
+    uniqueID: 1342787589
+    locked: 0
+  - name: LEVEL3
+    uniqueID: 4092004681
+    locked: 0
+  - name: HIGH
+    uniqueID: 3567243541
     locked: 0
   m_RenderingLayers:
   - Default

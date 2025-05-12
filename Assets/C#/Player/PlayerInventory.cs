@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class PlayerInventory : MonoBehaviour
@@ -9,28 +10,38 @@ public class PlayerInventory : MonoBehaviour
     [Header("Keybindings")]
     [SerializeField] private InputActionReference pickUpAction;
     [SerializeField] private InputActionReference dropAction;
-    [SerializeField] private InputActionReference inventoryAction1; // Primary weapon
-    [SerializeField] private InputActionReference inventoryAction2; // Secondary weapon
-    [SerializeField] private InputActionReference inventoryAction3; // Melee weapon
-    [SerializeField] private InputActionReference inventoryAction4; // Special utility 1
-    [SerializeField] private InputActionReference inventoryAction5; // Special utility 2
+    [SerializeField] private InputActionReference inventoryAction1; 
+    [SerializeField] private InputActionReference inventoryAction2; 
+    [SerializeField] private InputActionReference inventoryAction3; 
+    [SerializeField] private InputActionReference inventoryAction4; 
+    [SerializeField] private InputActionReference inventoryAction5; 
     
     [Header("Inventory Settings")]
     [SerializeField] private int inventorySize;
-    private string _currentSlot;
-    private Dictionary<string, GameObject> _inventory = new Dictionary<string, GameObject>();
+    [HideInInspector] public string currentSlot; 
+    public Dictionary<string, GameObject> inventory = new Dictionary<string, GameObject>();
+    
+    [SerializeField] private Sprite inventoryUpperSprite;
+    [SerializeField] private Sprite inventoryLowerSprite;
     
     [Header("Graphical Settings")]
-    [SerializeField] private float inUseFloatDifference;
-    private Vector3 _defaultPosition;
-    private Dictionary<string, GameObject> _inventorySpriteRenderers = new Dictionary<string, GameObject>();
+    [SerializeField] private float inUseFloatDifference; 
+    private Vector3 _defaultPosition; 
+    private Dictionary<string, GameObject> _inventorySpriteRenderers = new Dictionary<string, GameObject>(); 
+    private GameObject _primaryState;
+    private GameObject _primaryStateHand;
+    private GameObject _secondaryState; 
+    private GameObject _secondaryStateHand;
     
     [Header("PickUp Settings")]
-    [SerializeField] private bool _isItemInRange;
-    [SerializeField] private GameObject _itemInRange;
+    [SerializeField] private bool isItemInRange;
+    [SerializeField] private GameObject itemInRange;
+    
+    private HandleGUIStats _handleGUIStats;
 
     private void OnEnable()
     {
+        // Enable all input actions when the object becomes active
         pickUpAction.action.Enable();
         dropAction.action.Enable();
         inventoryAction1.action.Enable();
@@ -42,6 +53,7 @@ public class PlayerInventory : MonoBehaviour
     
     private void OnDisable()
     {
+        // Disable all input actions when the object is disabled
         pickUpAction.action.Disable();
         dropAction.action.Disable();
         inventoryAction1.action.Disable();
@@ -53,186 +65,247 @@ public class PlayerInventory : MonoBehaviour
     
     private void Start()
     {
-        // For the List of the inventory :
-        // slot [0] or 1 is reserved for the primary weapon
-        // slot [1] or 2 is reserved for the secondary weapon
-        // slot [2] or 3 is reserved for the melee weapon
-        // slot [3] or 4 is reserved for the utility 1
-        // slot [4] or 5 is reserved for the utility 2
+        // Map inventory slots to child GameObjects (weapon holders)
+        inventory["Primary"] = transform.GetChild(0).transform.GetChild(0).gameObject;
+        inventory["Secondary"] = transform.GetChild(0).transform.GetChild(1).gameObject;
+        inventory["Melee"] = transform.GetChild(0).transform.GetChild(2).gameObject;
+        inventory["Utility 1"] = transform.GetChild(0).transform.GetChild(3).gameObject;
+        inventory["Utility 2"] = transform.GetChild(0).transform.GetChild(4).gameObject;    
         
-        // Initialize dictionary mapping layers to inventory slots
-        _inventory["Primary"] = transform.GetChild(2).transform.GetChild(0).gameObject;
-        _inventory["Secondary"] = transform.GetChild(2).transform.GetChild(1).gameObject;
-        _inventory["Melee"] = transform.GetChild(2).transform.GetChild(2).gameObject;
-        _inventory["Utility 1"] = transform.GetChild(2).transform.GetChild(3).gameObject;
-        _inventory["Utility 2"] = transform.GetChild(2).transform.GetChild(4).gameObject;
+        currentSlot = "Primary"; // Default slot at start
         
-        _currentSlot = "Primary";
-        foreach (var item in _inventory)
+        // Disable all inventory items at start
+        foreach (var item in inventory)
         {
             item.Value.gameObject.SetActive(false);
         }
-        
+
+        // Link UI elements (inventory slot indicators) using tags
         _inventorySpriteRenderers["Primary"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot1");
-        _inventorySpriteRenderers["Secondary"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot2");
-        _inventorySpriteRenderers["Melee"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot3");
-        _inventorySpriteRenderers["Utility 1"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot4");
-        _inventorySpriteRenderers["Utility 2"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot5");
+        _inventorySpriteRenderers["Primary"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
+        _inventorySpriteRenderers["Primary"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
         
+        _inventorySpriteRenderers["Secondary"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot2");
+        _inventorySpriteRenderers["Secondary"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
+        _inventorySpriteRenderers["Secondary"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
+        
+        _inventorySpriteRenderers["Melee"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot3");
+        _inventorySpriteRenderers["Melee"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
+        _inventorySpriteRenderers["Melee"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
+        
+        _inventorySpriteRenderers["Utility 1"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot4");
+        _inventorySpriteRenderers["Utility 1"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
+        _inventorySpriteRenderers["Utility 1"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
+        
+        _inventorySpriteRenderers["Utility 2"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot5");
+        _inventorySpriteRenderers["Utility 2"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
+        _inventorySpriteRenderers["Utility 2"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
+
+        // Store default UI position for resetting later
         _defaultPosition = _inventorySpriteRenderers["Primary"].transform.GetChild(1).position;
+
+        // References to visual states (e.g., weapon icons/sprites)
+        _primaryState = transform.GetChild(1).transform.GetChild(1).gameObject;
+        _primaryStateHand = transform.GetChild(1).transform.GetChild(1).transform.GetChild(2).gameObject;
+        _secondaryState = transform.GetChild(1).transform.GetChild(2).gameObject;
+        _secondaryStateHand = transform.GetChild(1).transform.GetChild(2).transform.GetChild(2).gameObject;
+        
+        _handleGUIStats = GameObject.FindWithTag("StatsHolder").GetComponent<HandleGUIStats>();
     }
     
     private void Update()
     {
-        HandleInventory();
+        HandleInventory(); // Handle input for switching inventory slots
 
-        if (_isItemInRange && pickUpAction.action.WasPressedThisFrame()) 
+        // Check if the player is near an item and tries to pick it up
+        if (isItemInRange && pickUpAction.action.WasPressedThisFrame()) 
         {
-            PickUpItem(_itemInRange);
+            PickUpItem(itemInRange);
         }
 
+        // Drop item from current inventory slot
         if (dropAction.action.WasPressedThisFrame())
         {
             try
             {
-                DropItem(_inventory[_currentSlot].transform.GetChild(0).gameObject);
+                DropItem(inventory[currentSlot].transform.GetChild(0).gameObject);
             }
             catch (UnityException)
             {
-                Debug.Log("Can't drop a null slot !");
+                Debug.LogWarning("Can't drop a null slot !");
             }
         }
     }
     
     private void HandleInventory()
     {
-        if (inventoryAction1.action.WasPressedThisFrame() && !_currentSlot.Equals("Primary"))
-        {
-            Debug.Log("Primary Pressed");
-            EquipItem("Primary"); // Primary slot
-        }
+        // Check each input and switch slots accordingly
+        if (inventoryAction1.action.WasPressedThisFrame() && !currentSlot.Equals("Primary"))
+            EquipItem("Primary");
+        
+        if (inventoryAction2.action.WasPressedThisFrame() && !currentSlot.Equals("Secondary"))
+            EquipItem("Secondary");
 
-        if (inventoryAction2.action.WasPressedThisFrame() && !_currentSlot.Equals("Secondary"))
-        {
-            Debug.Log("Secondary Pressed");
-            EquipItem("Secondary"); // Secondary slot
-        }
+        if (inventoryAction3.action.WasPressedThisFrame() && !currentSlot.Equals("Melee"))
+            EquipItem("Melee");
 
-        if (inventoryAction3.action.WasPressedThisFrame() && !_currentSlot.Equals("Melee"))
-        {
-            Debug.Log("Melee Pressed");
-            EquipItem("Melee"); // Melee slot
-        }
+        if (inventoryAction4.action.WasPressedThisFrame() && !currentSlot.Equals("Utility 1"))
+            EquipItem("Utility 1");
 
-        if (inventoryAction4.action.WasPressedThisFrame() && !_currentSlot.Equals("Utility 1"))
-        {
-            Debug.Log("Utility 1 Pressed");
-            EquipItem("Utility 1"); // Utility 1 slot
-        }
-
-        if (inventoryAction5.action.WasPressedThisFrame() && !_currentSlot.Equals("Utility 2"))
-        {
-            Debug.Log("Utility 2 Pressed");
-            EquipItem("Utility 2"); // Utility 2 slot
-        }
+        if (inventoryAction5.action.WasPressedThisFrame() && !currentSlot.Equals("Utility 2"))
+            EquipItem("Utility 2");
     }
     
     private void EquipItem(string slot)
     {
-        try
+        // Visually unselect the current slot
+        _inventorySpriteRenderers[currentSlot].transform.GetChild(1).transform.localPosition = Vector3.zero;
+        _inventorySpriteRenderers[currentSlot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1, 0);
+        inventory[currentSlot].gameObject.SetActive(false);
+        
+        // Mark item as not equipped
+        if (inventory[currentSlot].transform.childCount > 0)
         {
-            _inventorySpriteRenderers[_currentSlot].transform.GetChild(1).transform.localPosition = Vector3.zero;
-            _inventorySpriteRenderers[_currentSlot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1, 0);
-            _inventory[_currentSlot].gameObject.SetActive(false);
-
-            if (_inventory[_currentSlot].transform.childCount > 0)
-            {
-                _inventory[_currentSlot].transform.GetChild(0).GetComponent<PickableSpriteId>().isEquipped = false;
-            }
-
-            _currentSlot = slot;
-
-            _inventorySpriteRenderers[slot].transform.GetChild(1).transform.localPosition = new Vector3(0, 0 - inUseFloatDifference, 0);
-            _inventorySpriteRenderers[slot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1 + inUseFloatDifference, 0);
-            _inventory[slot].gameObject.SetActive(true);
-
-            if (_inventory[slot].transform.childCount > 0)
-            {
-                _inventory[slot].transform.GetChild(0).GetComponent<PickableSpriteId>().isEquipped = true;
-            }
+            inventory[currentSlot].transform.GetChild(0).GetComponent<ItemIdentificationVariables>().isEquipped = false;
         }
-        catch (UnityException e)
+        
+        currentSlot = slot; // Change current slot
+        
+        // Visually highlight the new slot
+        _inventorySpriteRenderers[slot].transform.GetChild(1).transform.localPosition = new Vector3(0, 0 - inUseFloatDifference, 0);
+        _inventorySpriteRenderers[slot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1 + inUseFloatDifference, 0);
+        inventory[slot].gameObject.SetActive(true);
+
+        if (inventory[slot].transform.childCount > 0)
         {
-            Debug.LogWarning($"EquipItem failed: {e.Message}");
+            ItemIdentificationVariables newItem = inventory[slot].transform.GetChild(0).GetComponent<ItemIdentificationVariables>();
+            newItem.isEquipped = true;
+
+            UpdateSkinStates();
+            
+            _handleGUIStats.UpdateAmmo(newItem.currentAmmo, newItem.maxAmmo);
+        }
+        else
+        {
+            // Equip empty hand
+            _handleGUIStats.ammoTextHolder.SetActive(false);
         }
     }
 
-    
     private void PickUpItem(GameObject item)
     {
-        string targetSlot = LayerMask.LayerToName(item.layer);
-        Transform transformUISlot = _inventorySpriteRenderers[LayerMask.LayerToName(item.layer)].transform.GetChild(0)
-            .transform;
+        string targetSlot = LayerMask.LayerToName(item.layer); // Determine which slot to place item in
+        Transform transformUISlot = _inventorySpriteRenderers[targetSlot].transform.GetChild(0).transform;
 
         try
         {
-            var currentItem = _inventory[targetSlot].transform.GetChild(0);
+            // If there's already an item, drop it and remove UI icon
+            var currentItem = inventory[targetSlot].transform.GetChild(0);
 
             if (currentItem != null)
             {
                 DropItem(currentItem.gameObject);
-                Destroy(_inventorySpriteRenderers[LayerMask.LayerToName(item.layer)].transform.GetChild(0).GetChild(0)
-                    .gameObject);
+                Destroy(transformUISlot.GetChild(0).gameObject);
             }
 
-            HandleItem(item, targetSlot);
+            HandleItem(item, targetSlot); // Attach item to inventory
 
-            // Create a new UI Image instead of Instantiating a sprite
-            GameObject uiItem = new GameObject("InventoryItem");
-            uiItem.transform.SetParent(transformUISlot, false); // Attach it to the UI slot
-            Image itemImage = uiItem.AddComponent<Image>(); // Add Image component
-            itemImage.sprite = item.GetComponent<PickableSpriteId>().spriteId; // Assign sprite
-            uiItem.GetComponent<RectTransform>().localScale = new Vector3(0.01f, 0.01f, 1);
+            // Create UI icon for inventory
+            GameObject uiItem = new GameObject($"{item.name} + - UI Item");
+            uiItem.transform.SetParent(transformUISlot, false);
+            SpriteRenderer itemSprite = uiItem.AddComponent<SpriteRenderer>();
+            itemSprite.sprite = item.GetComponent<ItemIdentificationVariables>().spriteId;
+            itemSprite.sortingOrder = 1;
+            uiItem.transform.localScale = new Vector3(0.5f, 0.5f, 1);
+            
+            // Update ammo
+            ItemIdentificationVariables newItem = item.GetComponent<ItemIdentificationVariables>();
+            _handleGUIStats.UpdateAmmo(newItem.currentAmmo, newItem.maxAmmo);
         }
         catch (UnityException)
         {
-            HandleItem(item, targetSlot);
-
-            GameObject uiItem = new GameObject(item.name);
+            // If no item was in slot, just add the new one
+            HandleItem(item, targetSlot); // Attach item to inventory
+            
+            // Create UI icon for inventory
+            GameObject uiItem = new GameObject($"{item.name} + - UI Item");
             uiItem.transform.SetParent(transformUISlot, false);
-            Image itemImage = uiItem.AddComponent<Image>();
-            itemImage.sprite = item.GetComponent<PickableSpriteId>().spriteId;
-            uiItem.GetComponent<RectTransform>().localScale = new Vector3(0.01f, 0.01f, 1);
+            SpriteRenderer itemSprite = uiItem.AddComponent<SpriteRenderer>();
+            itemSprite.sprite = item.GetComponent<ItemIdentificationVariables>().spriteId;
+            itemSprite.sortingOrder = 1;            
+            uiItem.transform.localScale = new Vector3(0.5f, 0.5f, 1);
+            
+            // Update ammo
+            ItemIdentificationVariables newItem = item.GetComponent<ItemIdentificationVariables>();
+            _handleGUIStats.UpdateAmmo(newItem.currentAmmo, newItem.maxAmmo);
         }
     }
 
-
     private void HandleItem(GameObject item, string targetSlot)
     {
-        // item.SetActive(false);
-        item.transform.SetParent(_inventory[targetSlot].transform);
-        item.transform.localPosition = Vector3.zero;
-        item.transform.localRotation = Quaternion.Euler(0, 0, item.GetComponent<PickableSpriteId>().rotDiff);
-        item.GetComponent<SpriteRenderer>().sortingOrder = 3;
-        EquipItem(targetSlot);
+        // Set item as a child of the slot, align it visually
+        item.transform.SetParent(inventory[targetSlot].transform);
+        item.transform.position = targetSlot == "Primary" ? _primaryStateHand.transform.position : _secondaryStateHand.transform.position;
+        item.transform.localRotation = Quaternion.Euler(0, 0, item.GetComponent<ItemIdentificationVariables>().rotDiff);
+        // item.GetComponent<SpriteRenderer>().sortingLayerName = inHandSortingLayer; // Ensure it's rendered in front
+        EquipItem(targetSlot); // Equip immediately
     }
 
     private void DropItem(GameObject item)
     {
-        PickableSpriteId pickableSpriteId = item.GetComponent<PickableSpriteId>();
+        // Reset item state when dropped
+        ItemIdentificationVariables itemIdentificationVariables = item.GetComponent<ItemIdentificationVariables>();
         item.transform.SetParent(null);
-        item.transform.localRotation = Quaternion.Euler(0, 0, pickableSpriteId.rotDiff);
-        item.GetComponent<SpriteRenderer>().sortingOrder = 1;
-        pickableSpriteId.isEquipped = false;
-        Destroy(_inventorySpriteRenderers[_currentSlot].transform.GetChild(0).transform.GetChild(0).gameObject);
+        // item.GetComponent<SpriteRenderer>().sortingLayerName = onGroundSortingLayer;
+        itemIdentificationVariables.isEquipped = false;
+
+        // Remove item from UI
+        Destroy(_inventorySpriteRenderers[currentSlot].transform.GetChild(0).transform.GetChild(0).gameObject);
+
+        // Skin State
+        _primaryState.SetActive(false);
+        _secondaryState.SetActive(true);
+        
+        _handleGUIStats.UpdateAmmo(-1, -1);
     }
 
+    public void UpdateInventoryGraphics(string layer)
+    {
+    // UPDATE WEAPON LAYER ON HEIGHT CHANGE
+        foreach (var obj in inventory.Values)
+        {
+            try
+            {
+                obj.transform.GetChild(0).GetComponent<SpriteRenderer>().sortingLayerName = layer;
+            }
+            catch (Exception e)
+            {
+                break;
+            }
+        }
+    }
+
+    private void UpdateSkinStates()
+    {
+        if (currentSlot.Equals("Primary"))
+        {
+            _primaryState.SetActive(true);
+            _secondaryState.SetActive(false);
+        }
+        else
+        {
+            _primaryState.SetActive(false);
+            _secondaryState.SetActive(true);
+        }
+    }
+
+    // Detect if the player is in range of a pickup item
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("PickUpable"))
         {
-            _isItemInRange = true;
-            _itemInRange = other.gameObject;
+            isItemInRange = true;
+            itemInRange = other.gameObject;
         }
     }
 
@@ -240,9 +313,8 @@ public class PlayerInventory : MonoBehaviour
     {
         if (other.CompareTag("PickUpable"))
         {
-            _isItemInRange = false;
-            _itemInRange = null;
+            isItemInRange = false;
+            itemInRange = null;
         }
     }
-
-}   
+}
