@@ -9,6 +9,8 @@ public class RoundManager : MonoBehaviour
     [Header("References")]
     [SerializeField] private GameObject[] spawnableEnemies;
     private GameObject[] _spawnPoints;
+    private GameManager _gameManager;
+    private PlayerInventory _playerInventory;
     
     [Header("Rounds Settings")]
     [SerializeField] private int numberOfRounds;
@@ -19,44 +21,60 @@ public class RoundManager : MonoBehaviour
     private bool _spawnPhaseActive;
     private bool _activeSpawn;
     
-    [Header("Difficulty Settings")]
-    public float enemyHealthMultiplier = 1.0f;
-    public float enemySpeedMultiplier = 1.0f;
-    public float enemyDamageMultiplier = 1.0f;
-    public float difficultyRampUpRate = 0.2f; // Increase 20% per round
-    
     [Header("Round Pause Settings")]
     [SerializeField] private float pauseBetweenRounds = 2.0f;
     private bool _paused;
     private float _currentPauseBetweenRounds;
     
-    private void Awake()
-    {
-        _spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
-        
-        _currentPauseBetweenRounds = pauseBetweenRounds;
-    }
+    [Header("Round Win Settings")]
+    private GameObject _winScreen;
+
+    [Header("Gun Spawn Settings")] 
+    [SerializeField] private GameObject[] weapons;
 
     private void Start()
     {
+        _playerInventory = GameObject.FindWithTag("Player").GetComponent<PlayerInventory>();
+        _spawnPoints = GameObject.FindGameObjectsWithTag("SpawnPoint");
+        _gameManager = GameObject.FindWithTag("GameManager").GetComponent<GameManager>();
+        
+        _currentPauseBetweenRounds = pauseBetweenRounds;
+        _winScreen = GameObject.FindGameObjectWithTag("WinScreen");
+        _winScreen.SetActive(false);
+
+        foreach (var weapon in weapons)
+        {
+            weapon.SetActive(false);
+        }
+        weapons[0].SetActive(true);
+        
         StartRound();
     }
 
     private void Update()
     {
-        if (_roundActive && EnemiesAllDead())
+        if (_currentRound < numberOfRounds)
         {
-            EndRound();
+            if (_roundActive && EnemiesAllDead()) EndRound();
+            if (_paused) PauseBetweenRounds();
+            if (_spawnPhaseActive && !_activeSpawn) StartCoroutine(HandleEnemySpawn(_currentRound));
+        }
+        else
+        {
+            if (EnemiesAllDead())
+            {
+                Time.timeScale = 0;
+                _winScreen.SetActive(true);
+            }
         }
 
-        if (_paused)
+        if (_currentRound == 2)
         {
-            PauseBetweenRounds();
+            weapons[1].SetActive(true);
         }
-
-        if (_spawnPhaseActive && !_activeSpawn)
+        if(_currentRound == 4)
         {
-            StartCoroutine(HandleEnemySpawn(_currentRound));
+            weapons[2].SetActive(true);
         }
     }
 
@@ -65,11 +83,6 @@ public class RoundManager : MonoBehaviour
         Debug.Log($"Starting Round {_currentRound}");
 
         _roundActive = true;
-
-        // Scale difficulty
-        enemyHealthMultiplier = 1.0f + (_currentRound - 1) * difficultyRampUpRate;
-        enemySpeedMultiplier = 1.0f + (_currentRound - 1) * difficultyRampUpRate;
-        enemyDamageMultiplier = 1.0f + (_currentRound - 1) * difficultyRampUpRate;
 
         StartCoroutine(HandleEnemySpawn(_currentRound));
     }
@@ -111,12 +124,29 @@ public class RoundManager : MonoBehaviour
             GameObject usedSpawnPoint = _spawnPoints[Random.Range(0, _spawnPoints.Length)];
             GameObject enemy = Instantiate(GetEnemyToSpawn(_currentRound), usedSpawnPoint.transform.position,
                 Quaternion.identity);
-
-            // Example: scale difficulty on the enemy
-            enemy.GetComponent<ZombieIdentificationVariables>().SetZombieDifficulty(enemyHealthMultiplier,
-                enemyDamageMultiplier, enemySpeedMultiplier);
+            
+            enemy.layer = usedSpawnPoint.layer;
+            enemy.GetComponent<SpriteRenderer>().sortingLayerName = GameObjectLayerToUiLayer(enemy);
             
             yield return new WaitForSeconds(pauseBetweenSpawns);
+        }
+    }
+
+    private string GameObjectLayerToUiLayer(GameObject obj)
+    {
+        switch (obj.layer)
+        {
+            case 6:
+                return "LEVEL1";
+            
+            case 7:
+                return "LEVEL2";
+            
+            case 8:
+                return "LEVEL3";
+            
+            default:
+                return "LEVEL1";
         }
     }
 
@@ -138,10 +168,24 @@ public class RoundManager : MonoBehaviour
         
         _roundActive = false;
         _currentRound++;
+        
+        _gameManager.SpawnUtility();
+        UpdateAmmo();
     }
     
     private bool EnemiesAllDead()
     {
         return GameObject.FindGameObjectsWithTag("Zombie").Length == 0;
+    }
+
+    private void UpdateAmmo()
+    {
+        foreach (var slot in _playerInventory.inventory.Values)
+        {
+            if (slot.transform.childCount > 0)
+            {
+                slot.transform.GetChild(0).GetComponent<ItemIdentificationVariables>().ResyncAmmo(20);
+            }
+        }
     }
 }

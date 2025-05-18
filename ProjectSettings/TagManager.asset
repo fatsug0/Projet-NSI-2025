@@ -20,6 +20,11 @@ TagManager:
   - Checkpoint
   - Walls
   - Sky
+  - UI
+  - DeathScreen
+  - UtilitySpawnPoint
+  - GameManager
+  - WinScreen
   layers:
   - Default
   - TransparentFX

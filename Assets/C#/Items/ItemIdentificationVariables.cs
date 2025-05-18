@@ -6,7 +6,7 @@ using UnityEngine.Serialization;
 public class ItemIdentificationVariables : MonoBehaviour
 {
     [Header("Sprite & Graphic Settings")]
-    public Sprite spriteId;
+    public Texture2D spriteId;
     public bool automaticFill;
     public bool isEquipped;
     public float rotDiff;
@@ -23,7 +23,7 @@ public class ItemIdentificationVariables : MonoBehaviour
     {
         if (automaticFill)
         {
-            spriteId = GetComponent<SpriteRenderer>().sprite;
+            spriteId = GetComponent<SpriteRenderer>().sprite.texture;
         }
 
         if (usesAmmo)
@@ -59,5 +59,10 @@ public class ItemIdentificationVariables : MonoBehaviour
             currentAmmo = shotgunScript.currentNumberOfBullet;
             maxAmmo = shotgunScript.ammoInReserve;
         }
+    }
+
+    public void ResyncAmmo(int ammount)
+    {
+        weaponGunScript.ammoInReserve += ammount;
     }
 }

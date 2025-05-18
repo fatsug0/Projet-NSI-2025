@@ -120,7 +120,6 @@ public class WeaponGunScript : MonoBehaviour
         rb.linearVelocity = bullet.transform.right * bulletSpeed;
         
         bullet.GetComponent<SpriteRenderer>().sortingLayerID = GetComponent<SpriteRenderer>().sortingLayerID;
-        Debug.Log(gameObject.layer + " : " + GetComponent<SpriteRenderer>().sortingLayerID);
         bullet.layer = gameObject.layer;
         // }
 

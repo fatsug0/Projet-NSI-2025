@@ -21,7 +21,7 @@ public class BonusMedkitBehaviour : MonoBehaviour
             
             // Get the health variable of the player and increases the health by the desired amount
             other.GetComponent<PlayerController>()._currentHealth += healthValue;
-            _handleGUIStats.UpdateHealth();
+            _handleGUIStats.UpdateHealth(player._currentHealth, player.maxHealth);
             Destroy(gameObject);
         }
     }

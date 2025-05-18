@@ -21,11 +21,9 @@ public class PlayerInventory : MonoBehaviour
     [HideInInspector] public string currentSlot; 
     public Dictionary<string, GameObject> inventory = new Dictionary<string, GameObject>();
     
-    [SerializeField] private Sprite inventoryUpperSprite;
-    [SerializeField] private Sprite inventoryLowerSprite;
+    [SerializeField] private Sprite inventorySprite;
     
     [Header("Graphical Settings")]
-    [SerializeField] private float inUseFloatDifference; 
     private Vector3 _defaultPosition; 
     private Dictionary<string, GameObject> _inventorySpriteRenderers = new Dictionary<string, GameObject>(); 
     private GameObject _primaryState;
@@ -82,24 +80,20 @@ public class PlayerInventory : MonoBehaviour
 
         // Link UI elements (inventory slot indicators) using tags
         _inventorySpriteRenderers["Primary"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot1");
-        _inventorySpriteRenderers["Primary"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
-        _inventorySpriteRenderers["Primary"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
+        _inventorySpriteRenderers["Primary"].transform.GetChild(1).GetComponent<RawImage>().texture = inventorySprite.texture;
         
         _inventorySpriteRenderers["Secondary"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot2");
-        _inventorySpriteRenderers["Secondary"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
-        _inventorySpriteRenderers["Secondary"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
+        _inventorySpriteRenderers["Secondary"].transform.GetChild(1).GetComponent<RawImage>().texture = inventorySprite.texture;
         
-        _inventorySpriteRenderers["Melee"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot3");
-        _inventorySpriteRenderers["Melee"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
-        _inventorySpriteRenderers["Melee"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
-        
-        _inventorySpriteRenderers["Utility 1"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot4");
-        _inventorySpriteRenderers["Utility 1"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
-        _inventorySpriteRenderers["Utility 1"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
-        
-        _inventorySpriteRenderers["Utility 2"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot5");
-        _inventorySpriteRenderers["Utility 2"].transform.GetChild(1).GetComponent<RawImage>().texture = inventoryUpperSprite.texture;
-        _inventorySpriteRenderers["Utility 2"].transform.GetChild(2).GetComponent<RawImage>().texture = inventoryLowerSprite.texture;
+        // The three last slots are disabled because i ran out of time to implement other weapons
+        // _inventorySpriteRenderers["Melee"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot3");
+        // _inventorySpriteRenderers["Melee"].transform.GetChild(1).GetComponent<RawImage>().texture = inventorySprite.texture;
+        //
+        // _inventorySpriteRenderers["Utility 1"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot4");
+        // _inventorySpriteRenderers["Utility 1"].transform.GetChild(1).GetComponent<RawImage>().texture = inventorySprite.texture;
+        //
+        // _inventorySpriteRenderers["Utility 2"] = GameObject.FindGameObjectWithTag("InventorySpriteSlot5");
+        // _inventorySpriteRenderers["Utility 2"].transform.GetChild(1).GetComponent<RawImage>().texture = inventorySprite.texture;
 
         // Store default UI position for resetting later
         _defaultPosition = _inventorySpriteRenderers["Primary"].transform.GetChild(1).position;
@@ -146,21 +140,21 @@ public class PlayerInventory : MonoBehaviour
         if (inventoryAction2.action.WasPressedThisFrame() && !currentSlot.Equals("Secondary"))
             EquipItem("Secondary");
 
-        if (inventoryAction3.action.WasPressedThisFrame() && !currentSlot.Equals("Melee"))
-            EquipItem("Melee");
-
-        if (inventoryAction4.action.WasPressedThisFrame() && !currentSlot.Equals("Utility 1"))
-            EquipItem("Utility 1");
-
-        if (inventoryAction5.action.WasPressedThisFrame() && !currentSlot.Equals("Utility 2"))
-            EquipItem("Utility 2");
+        // Ignoreing these slots since they are not used
+        // if (inventoryAction3.action.WasPressedThisFrame() && !currentSlot.Equals("Melee"))
+        //     EquipItem("Melee");
+        //
+        // if (inventoryAction4.action.WasPressedThisFrame() && !currentSlot.Equals("Utility 1"))
+        //     EquipItem("Utility 1");
+        //
+        // if (inventoryAction5.action.WasPressedThisFrame() && !currentSlot.Equals("Utility 2"))
+        //     EquipItem("Utility 2");
     }
     
     private void EquipItem(string slot)
     {
         // Visually unselect the current slot
-        _inventorySpriteRenderers[currentSlot].transform.GetChild(1).transform.localPosition = Vector3.zero;
-        _inventorySpriteRenderers[currentSlot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1, 0);
+        _inventorySpriteRenderers[currentSlot].transform.GetChild(1).transform.localScale = new Vector3(0.75f, 0.75f, 1f);
         inventory[currentSlot].gameObject.SetActive(false);
         
         // Mark item as not equipped
@@ -172,8 +166,7 @@ public class PlayerInventory : MonoBehaviour
         currentSlot = slot; // Change current slot
         
         // Visually highlight the new slot
-        _inventorySpriteRenderers[slot].transform.GetChild(1).transform.localPosition = new Vector3(0, 0 - inUseFloatDifference, 0);
-        _inventorySpriteRenderers[slot].transform.GetChild(2).transform.localPosition = new Vector3(0, -1 + inUseFloatDifference, 0);
+        _inventorySpriteRenderers[slot].transform.GetChild(1).transform.localScale = new Vector3(0.75f, 1f, 1f);
         inventory[slot].gameObject.SetActive(true);
 
         if (inventory[slot].transform.childCount > 0)
@@ -213,10 +206,9 @@ public class PlayerInventory : MonoBehaviour
             // Create UI icon for inventory
             GameObject uiItem = new GameObject($"{item.name} + - UI Item");
             uiItem.transform.SetParent(transformUISlot, false);
-            SpriteRenderer itemSprite = uiItem.AddComponent<SpriteRenderer>();
-            itemSprite.sprite = item.GetComponent<ItemIdentificationVariables>().spriteId;
-            itemSprite.sortingOrder = 1;
-            uiItem.transform.localScale = new Vector3(0.5f, 0.5f, 1);
+            RawImage itemSprite = uiItem.AddComponent<RawImage>();
+            itemSprite.texture = item.GetComponent<ItemIdentificationVariables>().spriteId;
+            uiItem.transform.localScale = new Vector3(2.75f, 2.75f, 1);
             
             // Update ammo
             ItemIdentificationVariables newItem = item.GetComponent<ItemIdentificationVariables>();
@@ -230,10 +222,9 @@ public class PlayerInventory : MonoBehaviour
             // Create UI icon for inventory
             GameObject uiItem = new GameObject($"{item.name} + - UI Item");
             uiItem.transform.SetParent(transformUISlot, false);
-            SpriteRenderer itemSprite = uiItem.AddComponent<SpriteRenderer>();
-            itemSprite.sprite = item.GetComponent<ItemIdentificationVariables>().spriteId;
-            itemSprite.sortingOrder = 1;            
-            uiItem.transform.localScale = new Vector3(0.5f, 0.5f, 1);
+            RawImage itemSprite = uiItem.AddComponent<RawImage>();
+            itemSprite.texture = item.GetComponent<ItemIdentificationVariables>().spriteId;
+            uiItem.transform.localScale = new Vector3(2.75f, 2.75f, 1);
             
             // Update ammo
             ItemIdentificationVariables newItem = item.GetComponent<ItemIdentificationVariables>();
@@ -278,7 +269,7 @@ public class PlayerInventory : MonoBehaviour
             {
                 obj.transform.GetChild(0).GetComponent<SpriteRenderer>().sortingLayerName = layer;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 break;
             }
@@ -317,4 +308,5 @@ public class PlayerInventory : MonoBehaviour
             itemInRange = null;
         }
     }
+    
 }

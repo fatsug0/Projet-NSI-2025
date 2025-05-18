@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class CameraFollow : MonoBehaviour
 {
@@ -7,6 +8,7 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private float swayAmount;
     private GameObject _player;
     private GameObject _sky;
+    public bool enabled_ = true;
 
     private void Start()
     {
@@ -16,6 +18,8 @@ public class CameraFollow : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (!enabled_) return;
+        
         // Just a simple script so the camera follows the player with a small delay for "realism"
         Vector3 playerPosition = new Vector3(_player.transform.position.x, _player.transform.position.y, -10);
         Vector3 targetPosition = Vector3.Lerp(transform.position, playerPosition, swayAmount * Time.deltaTime);
